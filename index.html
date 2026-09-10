@@ -21,15 +21,16 @@
   .app { min-height: 100vh; display: flex; flex-direction: column; }
 
   /* Saldo-Kopf: jetzt sticky, bleibt beim Scrollen sichtbar oben */
-  .balance-header { position: sticky; top: 0; z-index: 20; background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: 32px 24px 20px; text-align: center; }
+  .balance-header { position: sticky; top: 0; z-index: 20; background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: 22px 56px 18px; text-align: center; }
   .balance-label { font-size: 14px; color: var(--color-text-muted); margin: 0 0 8px; }
   .balance-amount { font-size: 40px; font-weight: 600; margin: 0; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
   .balance-amount.negative { color: var(--color-negative); }
   .balance-subtext { font-size: 12px; color: var(--color-text-muted); margin: 8px 0 0; }
 
-  .toolbar-row { display: flex; justify-content: center; gap: 8px; margin-top: 14px; }
-  .toolbar-btn { background: #f5f5f5; border: none; border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; color: var(--color-text-muted); cursor: pointer; }
-  .toolbar-btn.active { background: var(--color-text); color: #fff; }
+  .corner-btn { position: absolute; top: 50%; transform: translateY(-50%); background: none; border: none; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--color-text-muted); cursor: pointer; }
+  .corner-btn.active { background: #f5f5f5; color: var(--color-text); }
+  .corner-btn-left { left: 16px; }
+  .corner-btn-right { right: 16px; }
 
   .search-bar { display: flex; align-items: center; gap: 8px; max-width: 480px; margin: 12px auto 0; padding: 0 16px; }
   .search-bar input { flex: 1; border: 1px solid var(--color-border); border-radius: 10px; padding: 9px 12px; font-size: 16px; font-family: inherit; }
@@ -133,18 +134,17 @@
 <div class="app">
 
   <header class="balance-header">
+    <button id="importBtn" class="corner-btn corner-btn-left" type="button" aria-label="Einträge aus CSV importieren">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M7 14l5-5 5 5"/><path d="M5 3h14"/></svg>
+    </button>
+    <button id="searchToggleBtn" class="corner-btn corner-btn-right" type="button" aria-label="Suchen">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </button>
     <p class="balance-label">Aktueller Saldo</p>
     <p class="balance-amount" id="balanceAmount">0,00 €</p>
     <p class="balance-subtext" id="balanceSubtext">ausgeglichen</p>
-    <div class="toolbar-row">
-      <button id="searchToggleBtn" class="toolbar-btn" type="button" aria-label="Suchen">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </button>
-      <button id="importBtn" class="toolbar-btn" type="button" aria-label="Einträge aus CSV importieren">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M7 14l5-5 5 5"/><path d="M5 3h14"/></svg>
-      </button>
-    </div>
   </header>
+
 
   <div id="searchBar" class="search-bar" hidden>
     <input type="text" id="searchInput" placeholder="Notiz oder Position suchen ...">
