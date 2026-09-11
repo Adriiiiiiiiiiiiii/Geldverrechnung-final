@@ -21,13 +21,13 @@
   .app { min-height: 100vh; display: flex; flex-direction: column; }
 
   /* Saldo-Kopf: jetzt sticky, bleibt beim Scrollen sichtbar oben */
-  .balance-header { position: sticky; top: 0; z-index: 20; background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: 22px 56px 18px; text-align: center; }
+  .balance-header { position: sticky; top: 0; z-index: 20; background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: calc(22px + env(safe-area-inset-top)) 56px 18px; text-align: center; }
   .balance-label { font-size: 14px; color: var(--color-text-muted); margin: 0 0 8px; }
   .balance-amount { font-size: 40px; font-weight: 600; margin: 0; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
   .balance-amount.negative { color: var(--color-negative); }
   .balance-subtext { font-size: 12px; color: var(--color-text-muted); margin: 8px 0 0; }
 
-  .corner-btn { position: absolute; top: 50%; transform: translateY(-50%); background: none; border: none; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--color-text-muted); cursor: pointer; }
+  .corner-btn { position: absolute; top: calc(14px + env(safe-area-inset-top)); background: none; border: none; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--color-text-muted); cursor: pointer; }
   .corner-btn.active { background: #f5f5f5; color: var(--color-text); }
   .corner-btn-left { left: 16px; }
   .corner-btn-right { right: 16px; }
@@ -228,7 +228,7 @@
   "use strict";
 
   const STORAGE_KEY = "geldverrechnung_entries";
-  const LAST_EXPORT_KEY = "geldverrechnung_last_export";
+  const ENTRIES_SINCE_EXPORT_KEY = "geldverrechnung_entries_since_export";
 
   function isStorageAvailable() {
     try {
@@ -621,6 +621,7 @@
     if (pendingPhoto) entryData.photo = pendingPhoto;
 
     let newEntries;
+    const isNewEntry = !editingEntryId;
     if (editingEntryId) {
       const original = entries.find((en) => en.id === editingEntryId);
       const updatedEntry = Object.assign({ id: editingEntryId, timestamp: original.timestamp }, entryData);
@@ -630,6 +631,7 @@
       newEntries = entries.concat([newEntry]);
     }
     if (!persistEntries(newEntries)) return;
+    if (isNewEntry) { incrementEntriesSinceExport(); checkExportReminder(); }
     renderAll();
     closeForm();
     // Nach dem Speichern nach oben scrollen - der neue/geänderte Eintrag
@@ -708,7 +710,7 @@
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    try { localStorage.setItem(LAST_EXPORT_KEY, String(Date.now())); } catch (e) {}
+    try { localStorage.setItem(ENTRIES_SINCE_EXPORT_KEY, "0"); } catch (e) {}
     exportReminderEl.hidden = true;
   }
 
@@ -801,28 +803,34 @@
   });
 
   // --- Erinnerung ans Exportieren (kein automatischer Hintergrund-Export
-  // möglich - iOS Safari erlaubt das für Web-Apps nicht; das hier prüft
-  // stattdessen bei jedem Öffnen, ob es Zeit für ein manuelles Backup ist). --
+  // möglich - iOS Safari erlaubt das für Web-Apps nicht; das hier zählt
+  // stattdessen neue Einträge seit dem letzten Export und meldet sich ab 5). --
   const exportReminderEl = document.getElementById("exportReminder");
   const exportReminderText = document.getElementById("exportReminderText");
   const erExportBtn = document.getElementById("erExportBtn");
   const erDismissBtn = document.getElementById("erDismissBtn");
 
+  function getEntriesSinceExport() {
+    try { return Number(localStorage.getItem(ENTRIES_SINCE_EXPORT_KEY) || "0"); }
+    catch (e) { return 0; }
+  }
+  function incrementEntriesSinceExport() {
+    try { localStorage.setItem(ENTRIES_SINCE_EXPORT_KEY, String(getEntriesSinceExport() + 1)); }
+    catch (e) {}
+  }
+
   function checkExportReminder() {
     if (entries.length === 0) return;
-    let last = null;
-    try { last = localStorage.getItem(LAST_EXPORT_KEY); } catch (e) {}
-    const daysSince = last ? (Date.now() - Number(last)) / (1000 * 60 * 60 * 24) : Infinity;
-    if (daysSince >= 7) {
-      exportReminderText.textContent = last
-        ? "Dein letztes Backup ist über eine Woche her. Kurz eine aktuelle Sicherung herunterladen?"
-        : "Noch kein Backup erstellt. Kurz eine Sicherung als CSV herunterladen?";
+    const sinceExport = getEntriesSinceExport();
+    if (sinceExport >= 5) {
+      exportReminderText.textContent = `Seit dem letzten Backup sind ${sinceExport} neue Einträge dazugekommen. Kurz eine aktuelle Sicherung herunterladen?`;
       exportReminderEl.hidden = false;
     }
   }
   erExportBtn.addEventListener("click", doExport);
   erDismissBtn.addEventListener("click", () => { exportReminderEl.hidden = true; });
   checkExportReminder();
+
 
 })();
 </script>
